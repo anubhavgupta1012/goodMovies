@@ -15,7 +15,7 @@ public class RatingsInfoController {
 
     @RequestMapping("user/{userId}")
     public UserRatings getMessage(@PathVariable String userId) {
-        List<Ratings> ratings = Arrays.asList(new Ratings("1234", 10), new Ratings("2928", 7));
+        List<Ratings> ratings = Arrays.asList(new Ratings("100", 10), new Ratings("101", 7));
         return new UserRatings(ratings);
     }
 }

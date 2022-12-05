@@ -29,7 +29,7 @@ public class MovieCatalogService {
         List<CatalogItem> list = ratings.parallelStream().map(r -> {
 
             Movie movie = restTemplate.getForEntity(url + r.getMovieId(), Movie.class).getBody();
-            return new CatalogItem(movie.getMovieName(), "testDesc", r.getRatings());
+            return new CatalogItem(movie.getMovieId(), movie.getMovieName(), r.getRatings());
         }).collect(Collectors.toList());
         return list;
     }
