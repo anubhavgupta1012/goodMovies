@@ -24,23 +24,38 @@ public class MovieCatalogService {
     @Value("${ratings.info.url}")
     private String ratingsurl;
 
-    @HystrixCommand(fallbackMethod = "callFallBackMethod")
+
     public List<CatalogItem> getData(String userId) {
-        UserRatings body = restTemplate.getForEntity(ratingsurl, UserRatings.class).getBody();
+        UserRatings body = getUserRatings();
         List<Ratings> ratings = body.getRatings();
 
         List<CatalogItem> list = ratings.parallelStream().map(r -> {
 
-            Movie movie = restTemplate.getForEntity(url + r.getMovieId(), Movie.class).getBody();
+            Movie movie = getMovie(r);
             return new CatalogItem(movie.getMovieId(), movie.getMovieName(), r.getRatings());
         }).collect(Collectors.toList());
         return list;
     }
 
-    public List<CatalogItem> callFallBackMethod(String userId) {
-        // This fallback method should be simple so that it again doesn't create any chaos.
-        //to test this, if movie-info/ ratings-data service is down then we can this callback method will be called (that's
-        // the default fallback mechanism is decided because we haven't configured the conditions for ,circuit trip).
-        return Collections.singletonList(new CatalogItem("testName", "testDesc", 10));
+    /*
+     *NOTE : if a method of class is calling another method of same class, then Hystrix won't work.
+     *       If a method calling any method of another class then it will work.
+     */
+    @HystrixCommand(fallbackMethod = "callUserRatingsFallBackMethod")
+    private UserRatings getUserRatings() {
+        return restTemplate.getForEntity(ratingsurl, UserRatings.class).getBody();
+    }
+
+    public UserRatings callUserRatingsFallBackMethod() {
+        return new UserRatings(Collections.singletonList(new Ratings("101", 10)));
+    }
+
+    @HystrixCommand(fallbackMethod = "callGetMovieFallBackMethod")
+    private Movie getMovie(Ratings r) {
+        return restTemplate.getForEntity(url + r.getMovieId(), Movie.class).getBody();
+    }
+
+    public Movie callGetMovieFallBackMethod(Ratings r) {
+        return new Movie("101", "Interstellar");
     }
 }
