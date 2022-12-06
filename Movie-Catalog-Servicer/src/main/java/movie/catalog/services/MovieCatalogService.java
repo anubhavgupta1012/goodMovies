@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 public class MovieCatalogService {
 
     @Autowired
+    private XYZService xyzService;
+    @Autowired
     private RestTemplate restTemplate;
     @Value("${movie.info.url}")
     private String url;
@@ -26,36 +28,14 @@ public class MovieCatalogService {
 
 
     public List<CatalogItem> getData(String userId) {
-        UserRatings body = getUserRatings();
+        UserRatings body = xyzService.getUserRatings();
         List<Ratings> ratings = body.getRatings();
 
         List<CatalogItem> list = ratings.parallelStream().map(r -> {
 
-            Movie movie = getMovie(r);
+            Movie movie = xyzService.getMovie(r);
             return new CatalogItem(movie.getMovieId(), movie.getMovieName(), r.getRatings());
         }).collect(Collectors.toList());
         return list;
-    }
-
-    /*
-     *NOTE : if a method of class is calling another method of same class, then Hystrix won't work.
-     *       If a method calling any method of another class then it will work.
-     */
-    @HystrixCommand(fallbackMethod = "callUserRatingsFallBackMethod")
-    private UserRatings getUserRatings() {
-        return restTemplate.getForEntity(ratingsurl, UserRatings.class).getBody();
-    }
-
-    public UserRatings callUserRatingsFallBackMethod() {
-        return new UserRatings(Collections.singletonList(new Ratings("101", 10)));
-    }
-
-    @HystrixCommand(fallbackMethod = "callGetMovieFallBackMethod")
-    private Movie getMovie(Ratings r) {
-        return restTemplate.getForEntity(url + r.getMovieId(), Movie.class).getBody();
-    }
-
-    public Movie callGetMovieFallBackMethod(Ratings r) {
-        return new Movie("101", "Interstellar");
     }
 }
