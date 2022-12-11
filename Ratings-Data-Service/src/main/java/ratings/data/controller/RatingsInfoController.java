@@ -1,5 +1,6 @@
 package ratings.data.controller;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,8 +14,8 @@ import java.util.List;
 @RequestMapping("/ratings")
 public class RatingsInfoController {
 
-    @RequestMapping("user/{userId}")
-    public UserRatings getMessage(@PathVariable String userId) {
+    @GetMapping("user/{userId}")
+    public UserRatings getMessage(@PathVariable("userId") String userId) {
         List<Ratings> ratings = Arrays.asList(new Ratings("100", 10), new Ratings("101", 7));
         return new UserRatings(ratings);
     }

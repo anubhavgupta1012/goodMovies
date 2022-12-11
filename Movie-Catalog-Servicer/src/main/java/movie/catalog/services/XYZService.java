@@ -1,6 +1,8 @@
 package movie.catalog.services;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import movie.catalog.facade.MovieInfoProxy;
+import movie.catalog.facade.RatingsDataProxy;
 import movie.catalog.model.Movie;
 import movie.catalog.model.Ratings;
 import movie.catalog.model.UserRatings;
@@ -20,14 +22,20 @@ public class XYZService {
     private String url;
     @Value("${ratings.info.url}")
     private String ratingsurl;
+    @Autowired
+    private RatingsDataProxy ratingsDataProxy;
+    @Autowired
+    private MovieInfoProxy movieInfoProxy;
 
     /*
-    * Hystrix will only work if we are getting calls from another class.
-    */
+     * Hystrix will only work if we are getting calls from another class.
+     */
 
     @HystrixCommand(fallbackMethod = "callUserRatingsFallBackMethod")
     public UserRatings getUserRatings() {
-        return restTemplate.getForEntity(ratingsurl, UserRatings.class).getBody();
+        //return restTemplate.getForEntity(ratingsurl, UserRatings.class).getBody();
+        UserRatings userRatings = ratingsDataProxy.getUserRatingsViaFeign("testUserId");
+        return userRatings;
     }
 
     public UserRatings callUserRatingsFallBackMethod() {
@@ -36,7 +44,9 @@ public class XYZService {
 
     @HystrixCommand(fallbackMethod = "callGetMovieFallBackMethod")
     public Movie getMovie(Ratings r) {
-        return restTemplate.getForEntity(url + r.getMovieId(), Movie.class).getBody();
+        //return restTemplate.getForEntity(url + r.getMovieId(), Movie.class).getBody();
+        Movie movieViaFeign = movieInfoProxy.getMovieViaFeign(r.getMovieId());
+        return movieViaFeign;
     }
 
     public Movie callGetMovieFallBackMethod(Ratings r) {
